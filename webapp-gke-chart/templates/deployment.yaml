@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "webapp-gke.fullname" . }}
+labels:
+  app: {{ include "webapp-gke.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "webapp-gke.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "webapp-gke.name" . }}
+    spec:
+      containers:
+        - name: webapp
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DATABASE_HOST
+              value: 127.0.0.1:5432
+            - name: DATABASE_USER
+              value: {{ .Values.cloudsql.dbUser }}
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-instance-credentials
+                  key: password
+            - name: DATABASE_NAME
+              value: {{ .Values.cloudsql.dbName }}
+            - name: FILESTORE_PATH
+              value: {{ .Values.filestore.path }}
+            - name: BUCKET_NAME
+              value: {{ .Values.bucket.name }}
+          volumeMounts:
+            - name: filestore-volume
+              mountPath: {{ .Values.filestore.path }}
+            - name: bucket-credentials
+              mountPath: /root/.config/gcloud
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.33.1
+          args:
+            - "/cloud_sql_proxy"
+            - "-instances={{ .Values.cloudsql.instanceConnectionName }}=tcp:5432"
+            - "-credential_file=/secrets/cloudsql/credentials.json"
+          volumeMounts:
+            - name: cloudsql-creds
+              mountPath: /secrets/cloudsql
+      volumes:
+        - name: filestore-volume
+          persistentVolumeClaim:
+            claimName: {{ include "webapp-gke.fullname" . }}-pvc
+        - name: cloudsql-creds
+          secret:
+            secretName: cloudsql-instance-credentials
+        - name: bucket-credentials
+          secret:
+            secretName: gcp-bucket-credentials

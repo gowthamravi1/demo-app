@@ -1,0 +1,22 @@
+{{- if .Values.bucket.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "webapp-gke.fullname" . }}-bucket-init
+spec:
+  template:
+    spec:
+      containers:
+        - name: init-bucket
+          image: {{ .Values.bucket.initImage }}
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              set -e
+              echo "Creating bucket..."
+              gsutil ls -p $(gcloud config get-value project) gs://{{ .Values.bucket.name }} || \
+                gsutil mb gs://{{ .Values.bucket.name }}
+      restartPolicy: OnFailure
+  backoffLimit: 4
+{{- end }}

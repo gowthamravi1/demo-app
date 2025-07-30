@@ -1,0 +1,5 @@
+apiVersion: v2
+name: webapp-gke
+description: A Helm chart for GKE app with CloudSQL, Filestore & GCS
+version: 0.1.0
+appVersion: "1.0.0"

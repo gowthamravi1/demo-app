@@ -1,0 +1,27 @@
+replicaCount: 2
+image:
+  repository: gcr.io/my-project/webapp
+  tag: latest
+  pullPolicy: IfNotPresent
+service:
+  type: LoadBalancer
+  port: 80
+cloudsql:
+  enabled: true
+  instanceConnectionName: my-project:us-central1:my-sql-instance
+  dbUser: webuser
+  dbPassword: supersecret
+  dbName: webdb
+filestore:
+  enabled: true
+  server: filestore-server.c.1234567890.internal
+  path: /mnt/webfilestore
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Ti
+bucket:
+  enabled: true
+  name: my-gcs-bucket
+  initImage: google/cloud-sdk:latest

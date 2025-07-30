@@ -1,0 +1,14 @@
+{{- if .Values.filestore.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "webapp-gke.fullname" . }}-pvc
+spec:
+  accessModes: {{ toYaml .Values.filestore.accessModes | nindent 2 }}
+  resources:
+    requests:
+      storage: {{ .Values.filestore.resources.requests.storage }}
+  volumeAttributes:
+    server: {{ .Values.filestore.server }}
+    path: {{ .Values.filestore.path }}
+{{- end }}
